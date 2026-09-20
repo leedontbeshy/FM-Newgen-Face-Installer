@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Windows / Python ${{ matrix.python }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Lint
+        run: python -m ruff check .
+      - name: Format
+        run: python -m ruff format --check .
+      - name: Core and large-file tests
+        run: python -m pytest -q
+      - name: GUI smoke test with temporary data
+        run: python tools/smoke_ui.py
+      - name: Build portable ZIP
+        if: matrix.python == '3.14'
+        shell: pwsh
+        run: ./build.ps1 -Python (Get-Command python).Source
+      - name: Packaged GUI startup smoke
+        if: matrix.python == '3.14'
+        run: python tools/smoke_exe.py dist/FMNewgenFaceInstaller/FMNewgenFaceInstaller.exe
+      - name: Upload verified Windows preview
+        if: matrix.python == '3.14'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-x64-preview
+          path: |
+            dist/FMNewgenFaceInstaller-win-x64.zip
+            dist/FMNewgenFaceInstaller-win-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

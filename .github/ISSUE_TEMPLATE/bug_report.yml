@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible problem with installation, mapping or the UI.
+body:
+  - type: markdown
+    attributes:
+      value: "For data corruption or security issues, please use private vulnerability reporting. Do not upload real configs, save games, facepacks or personal paths."
+  - type: input
+    id: version
+    attributes:
+      label: App version and Windows version
+      placeholder: "v0.1.0, Windows 11 x64"
+    validations:
+      required: true
+  - type: dropdown
+    id: player_type
+    attributes:
+      label: Player type
+      options:
+        - Newgen (FM24)
+        - Real player
+        - Not related to a player
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps and expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include a sanitized error message and, if needed, a tiny synthetic XML example.
+    validations:
+      required: true

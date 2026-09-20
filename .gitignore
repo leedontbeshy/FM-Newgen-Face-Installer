@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+build/
+dist/
+artifacts/
+*.egg-info/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+*.bak
+*.tmp
+.env
+.env.*
+!.env.example
+# Local game data and personal recovery files must never be published.
+/config.xml
+/config.xml.*
+/settings.json
+/recovery/
+Thumbs.db
+.DS_Store
