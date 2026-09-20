@@ -11,6 +11,10 @@ portrait mapping. No face generation, cloud service, telemetry or save-game edit
 
 ![Application preview with synthetic test data](docs/assets/app.png)
 
+The interface follows Windows display scaling. Wide windows use two columns;
+narrow windows stack the form vertically. Text and previews grow with available
+space, while installation actions stay visible below the scrollable form.
+
 ## Download and run
 
 1. Download the Windows x64 ZIP from [Releases](https://github.com/leedontbeshy/FM-Newgen-Face-Installer/releases).
@@ -36,6 +40,9 @@ signature. See [Microsoft's signing guidance](https://learn.microsoft.com/en-us/
    starts in Windows Downloads, then remembers the last image folder.
 5. Check the preview and click **Install Face**.
 6. Clear the game's cache if needed and reload the skin.
+
+To install another face, enter the next player's ID and select the next image.
+You can repeat this in the same app session.
 
 The destination is always `<ID>.png`, never the source filename. PNGs are copied
 without recompression; JPEG/WEBP are converted to PNG with original dimensions

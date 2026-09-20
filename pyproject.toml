@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fm-newgen-face-installer"
-version = "0.1.0"
+version = "0.1.1"
 description = "A small Windows utility for safely installing Football Manager 2024 player faces."
 readme = "README.md"
 requires-python = ">=3.11"

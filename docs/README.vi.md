@@ -12,6 +12,11 @@ Tải ZIP Windows x64 từ Releases, giải nén **toàn bộ**, rồi mở
 `FMNewgenFaceInstaller.exe`. Giữ nguyên thư mục `_internal` đi kèm.
 Máy chạy bản portable không cần cài Python.
 
+Giao diện theo tỷ lệ hiển thị của Windows, dùng hai cột khi cửa sổ rộng và xếp
+dọc khi cửa sổ hẹp. Chữ và preview tăng theo không gian cửa sổ; các nút cài/sửa/xóa
+luôn nằm ngoài vùng cuộn. Bạn có thể đổi ID, chọn ảnh mới và cài nhiều face liên
+tiếp trong cùng một lần mở app.
+
 Bản phát hành hiện chưa ký số. Windows Smart App Control/chính sách doanh nghiệp
 có thể chặn file; không tắt bảo vệ để chạy app. Checksum giúp kiểm tra file tải về,
 không thay thế chữ ký số. Đọc release notes để biết kết quả kiểm thử bản đóng gói.
@@ -27,7 +32,7 @@ không thay thế chữ ký số. Đọc release notes để biết kết quả 
 5. Clear Cache nếu cần, sau đó Reload Skin trong FM.
 
 Ảnh PNG/JPG/JPEG/WEBP tĩnh được lưu thành `<ID>.png`, giữ kích thước và alpha.
-App không resize ảnh cài đặt; chỉ thu nhỏ preview. File picker ưu tiên Downloads,
+App không resize ảnh cài đặt; chỉ thay đổi kích thước preview. File picker ưu tiên Downloads,
 sau đó nhớ thư mục chọn ảnh gần nhất.
 
 Newgen FM24 cần `r-` ở target, nhưng tên ảnh vẫn chỉ là ID:

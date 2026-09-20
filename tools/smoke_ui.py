@@ -67,6 +67,7 @@ def main():
     parser.add_argument("--screenshot", type=Path)
     args = parser.parse_args()
     ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("green")
     with tempfile.TemporaryDirectory(prefix="fm-ui-smoke-") as directory:
         base = Path(directory)
         faces = base / "Custom Faces"
@@ -75,6 +76,8 @@ def main():
         Image.new("RGBA", (180, 240), (78, 139, 111, 160)).save(source, lossless=True)
         manager = SettingsManager(base / "settings.json")
         app = MainWindow(manager, prompt_on_start=False)
+        callback_errors = []
+        app.report_callback_exception = lambda kind, value, trace: callback_errors.append(value)
         try:
             with patch("ui.main_window.filedialog.askdirectory", return_value=str(faces)):
                 app.choose_folder()
@@ -143,6 +146,39 @@ def main():
                 args.screenshot.parent.mkdir(parents=True, exist_ok=True)
                 # Capture our HWND directly; other desktop windows may cover it.
                 ImageGrab.grab(window=app.winfo_id()).save(args.screenshot)
+            original_geometry = app.geometry()
+            entry_font_size = app.id_entry.cget("font").cget("size")
+            for name, geometry in (("narrow", "560x640"), ("wide", "1100x760"), ("maximized", None)):
+                if geometry:
+                    app.geometry(geometry)
+                else:
+                    app.state("zoomed")
+                pump(app, timeout=10)
+                # Let the debounced resize and its idle layout pass both finish.
+                pump(app)
+                assert app.id_entry.cget("font").cget("size") >= entry_font_size
+                if name == "wide":
+                    assert app.id_entry.cget("font").cget("size") > entry_font_size
+                if name == "narrow":
+                    assert not app._wide_layout
+                for button in (app.install_button, app.fix_button, app.remove_button, app.settings_button):
+                    assert button.winfo_ismapped()
+                    assert button.winfo_rootx() >= app.winfo_rootx()
+                    assert (
+                        button.winfo_rootx() + button.winfo_width() <= app.winfo_rootx() + app.winfo_width()
+                    )
+                    assert (
+                        button.winfo_rooty() + button.winfo_height() <= app.winfo_rooty() + app.winfo_height()
+                    )
+                photo_name = str(app.preview_label._label.cget("image"))
+                assert photo_name in app.tk.splitlist(app.tk.call("image", "names"))
+                if args.screenshot:
+                    ImageGrab.grab(window=app.winfo_id()).save(
+                        args.screenshot.with_stem(f"{args.screenshot.stem}-{name}")
+                    )
+            app.state("normal")
+            app.geometry(original_geometry)
+            pump(app)
             app.open_settings()
             pump(app)
             assert app._settings_window.winfo_exists()
@@ -161,6 +197,48 @@ def main():
             app.install()
             pump(app, lambda: not app.busy)
             assert ConfigManager(config).mapping_target("12345") == "graphics/pictures/person/12345/portrait"
+            # A new player must work without restarting the application. This
+            # exercises replacement of the actual Tk image, not just reusing it.
+            for number, extension in enumerate(("png", "jpg", "webp"), start=12346):
+                next_source = base / f"next-face-{number}.{extension}"
+                color = (40, 100 + number % 80, 180)
+                Image.new("RGB", (300, 360), color).save(next_source)
+                app.player_id.set(str(number))
+                with patch("ui.main_window.filedialog.askopenfilename", return_value=str(next_source)):
+                    app.select_image()
+                pump(app, lambda: not app.busy)
+                assert "Image ready" in app.status_label.cget("text"), app.status_label.cget("text")
+                assert app.selected_image == next_source
+                photo_name = str(app.preview_label._label.cget("image"))
+                assert photo_name in app.tk.splitlist(app.tk.call("image", "names"))
+                app.install_button.invoke()
+                pump(app, lambda: not app.busy)
+                installed = faces / f"{number}.png"
+                assert installed.exists(), app.status_label.cget("text")
+                with Image.open(installed) as installed_image, Image.open(next_source) as expected_image:
+                    assert installed_image.size == (300, 360)
+                    assert (
+                        installed_image.convert("RGBA").tobytes() == expected_image.convert("RGBA").tobytes()
+                    )
+                assert (
+                    ConfigManager(config).mapping_target(str(number))
+                    == f"graphics/pictures/person/{number}/portrait"
+                )
+            invalid = base / "broken.png"
+            invalid.write_bytes(b"not an image")
+            with patch("ui.main_window.logging.exception"):
+                app.load_selected(invalid)
+                pump(app, lambda: not app.busy)
+            assert app.selected_image is None
+            assert app.install_button.cget("state") == "disabled"
+            assert str(app.preview_label._label.cget("image")) == ""
+            app.load_selected(source)
+            pump(app, lambda: not app.busy)
+            assert "Image ready" in app.status_label.cget("text")
+            for appearance in ("light", "dark"):
+                ctk.set_appearance_mode(appearance)
+                pump(app)
+            assert not callback_errors, callback_errors
         finally:
             app.executor.shutdown(wait=True)
             app.busy = False
@@ -175,7 +253,7 @@ def main():
             assert Path(app.settings.face_folder).samefile(faces)
             app._close()
     print(
-        "UI SMOKE PASSED: folder, preview, validation, install, cancel, replace, restore, explicit repair, player type, settings, remove, relaunch"
+        "UI SMOKE PASSED: folder, preview, validation, install, cancel, replace, restore, explicit repair, player type, settings, remove, consecutive images, invalid-image recovery, resize/maximize, appearance, relaunch"
     )
 
 

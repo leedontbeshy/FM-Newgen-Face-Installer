@@ -15,6 +15,16 @@ Tk calls stay on the main thread; the worker sends results through a queue.
 Disk operations never run inside widget event handlers. Closing during a write
 is deferred until the operation finishes.
 
+`ui/layout.py` reads the Windows monitor work area directly because Tk can cache
+screen dimensions before DPI awareness changes. Window size is fitted in logical
+units without reducing the user's DPI scale. Resize callbacks reflow the form,
+adjust fonts and fit previews; actions remain outside the scrolling region.
+
+`ui/preview.py` clears the underlying Tcl image binding when a preview is removed.
+CustomTkinter 6.0's default label leaves that binding behind for `image=None`.
+Replacement previews are attached before their strong reference is switched;
+Tk image creation, clearing and resizing all happen on the UI thread.
+
 ## Config access
 
 Expat validates structure and supplies original byte offsets; it does not build

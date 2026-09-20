@@ -16,6 +16,12 @@ Release builds run their own tests and packaged-GUI startup check before publica
 - Local settings roundtrip and atomic failure behavior.
 - Real Tk event-loop smoke: install, cancel, replace, restore, explicit repair,
   player types, settings, remove and relaunch with remembered folder.
+- Consecutive PNG/JPG/WEBP selections and installs in one session, invalid-image
+  recovery, narrow/wide/maximized layouts and light/dark appearance transitions.
+
+The consecutive-image smoke case reproduced the `pyimage1` error before the
+0.1.1 fix. The corrected app passes that same case. The responsive layout was
+also visually inspected on a Windows display at 200% DPI.
 
 ## Large-file regression cases
 
