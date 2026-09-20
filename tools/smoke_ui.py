@@ -78,7 +78,9 @@ def main():
         try:
             with patch("ui.main_window.filedialog.askdirectory", return_value=str(faces)):
                 app.choose_folder()
-            assert manager.load().face_folder == str(faces)
+            # Windows runners can expose TEMP through an 8.3 path alias while
+            # the app saves the resolved long path. Compare folder identity.
+            assert Path(manager.load().face_folder).samefile(faces)
             assert app.install_button.cget("state") == "disabled"
             app.player_id.set("bad/id")
             assert app.remove_button.cget("state") == "disabled"
@@ -170,7 +172,7 @@ def main():
         ):
             app = MainWindow(manager)
             pump(app)
-            assert app.settings.face_folder == str(faces)
+            assert Path(app.settings.face_folder).samefile(faces)
             app._close()
     print(
         "UI SMOKE PASSED: folder, preview, validation, install, cancel, replace, restore, explicit repair, player type, settings, remove, relaunch"
